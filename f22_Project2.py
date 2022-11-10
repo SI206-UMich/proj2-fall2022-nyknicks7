@@ -25,7 +25,20 @@ def get_listings_from_search_results(html_file):
         ('Loft in Mission District', 210, '1944564'),  # example
     ]
     """
-    pass
+    f = open(html_file, 'r')
+    file_handle = f.read()
+    f.close()
+    soup = BeautifulSoup(file_handle, 'html.parser')
+    listing_title = soup.find_all('div', class_ = 't1jojoys dir dir-ltr')
+    price = soup.find_all('span', class_ = '_tyxjp1')
+    listing_id = soup.find_all('a', class_ = 'ln2bl2p dir dir-ltr')
+    for i in range(len(listing_id)):
+        listing_id[i] = re.findall(r'\d+', listing_id[i]['href'])
+    listing_info = []
+    for i in range(len(listing_title)):
+        listing_info.append((listing_title[i].text, int(price[i].text.strip('$')), listing_id[i][0]))
+    return listing_info
+
 
 
 def get_listing_information(listing_id):
@@ -94,7 +107,12 @@ def write_csv(data, filename):
 
     This function should not return anything.
     """
-    pass
+    row = ["Listing Title", "Cost", "Listing ID", "Policy Number", "Place Type", "Number of Bedrooms"]
+    data = sorted(data, key= lambda x:x[1])
+    with open(filename, 'w') as file:
+        writer = csv.writer(file)
+        writer.writerow(row)
+        writer.writerows(data)
 
 
 def check_policy_numbers(data):
@@ -139,19 +157,13 @@ def extra_credit(listing_id):
 class TestCases(unittest.TestCase):
 
     def test_get_listings_from_search_results(self):
-        # call get_listings_from_search_results("html_files/mission_district_search_results.html")
-        # and save to a local variable
         listings = get_listings_from_search_results("html_files/mission_district_search_results.html")
-        # check that the number of listings extracted is correct (20 listings)
         self.assertEqual(len(listings), 20)
-        # check that the variable you saved after calling the function is a list
         self.assertEqual(type(listings), list)
-        # check that each item in the list is a tuple
-
-        # check that the first title, cost, and listing id tuple is correct (open the search results html and find it)
-
-        # check that the last title is correct (open the search results html and find it)
-        pass
+        for item in listings:
+            self.assertEqual(type(item), tuple)
+        self.assertEqual(listings[0], ('Loft in Mission District', 210, '1944564'))
+        self.assertEqual(listings[-1], ('Guest suite in Mission District', 238, '32871760'))
 
     def test_get_listing_information(self):
         html_list = ["1623609",
@@ -201,7 +213,7 @@ class TestCases(unittest.TestCase):
         pass
 
     def test_write_csv(self):
-        # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
+    # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
         # and save the result to a variable
         detailed_database = get_detailed_listing_database("html_files/mission_district_search_results.html")
         # call write csv on the variable you saved
@@ -215,12 +227,11 @@ class TestCases(unittest.TestCase):
         # check that there are 21 lines in the csv
         self.assertEqual(len(csv_lines), 21)
         # check that the header row is correct
-
+        self.assertEqual(csv_lines[0], ['Listing Title', 'Cost', 'Listing ID', 'Policy Number', 'Place Type', 'Number of Bedrooms'])
         # check that the next row is Private room in Mission District,82,51027324,Pending,Private Room,1
-
+        self.assertEqual(csv_lines[1], ['Private room in Mission District', '82', '51027324', 'Pending', 'Private Room', '1'])
         # check that the last row is Apartment in Mission District,399,28668414,Pending,Entire Room,2
-
-        pass
+        self.assertEqual(csv_lines[-1], ['Apartment in Mission District', '399', '28668414', 'Pending', 'Entire Room', '2'])     
 
     def test_check_policy_numbers(self):
         # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
