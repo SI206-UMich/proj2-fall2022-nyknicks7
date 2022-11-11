@@ -65,7 +65,38 @@ def get_listing_information(listing_id):
         number of bedrooms
     )
     """
-    pass
+    file = f"html_files/listing_{listing_id}.html"
+    with open(file) as f:
+        soup = BeautifulSoup(f, 'html.parser')
+    
+    policy_tag = soup.find('li', class_= 'f19phm7j dir dir-ltr')
+    policy = policy_tag.find('span').text
+    if 'pending' in policy or 'Pending' in policy:
+        policy_number = 'Pending'
+    elif 'License not needed' in policy:
+        policy_number = 'Exempt'
+    else:
+        policy_number = policy
+
+    description = soup.find('h2', class_ = '_14i3z6h').text
+    if 'private' in description or 'Private' in description:
+        place_type = 'Private Room'
+    elif 'shared' in description or 'Shared' in description:
+        place_type = 'Shared Room'
+    else:
+        place_type = "Entire Room"
+    
+    bedrooms_text = soup.find_all('li', class_ = 'l7n4lsf dir dir-ltr')[1].find_all('span')[2].text
+    if 'Studio' in bedrooms_text or 'studio' in bedrooms_text:
+        bedrooms = 1
+    else:
+        bedrooms = int(bedrooms_text[0])
+
+    return (
+        policy_number,
+        place_type,
+        bedrooms
+    )
 
 
 def get_detailed_listing_database(html_file):
@@ -213,12 +244,11 @@ class TestCases(unittest.TestCase):
             # check that the third element in the tuple is an int
             self.assertEqual(type(listing_information[2]), int)
         # check that the first listing in the html_list has policy number 'STR-0001541'
-
+        self.assertEqual(listing_informations[0][0], 'STR-0001541')
         # check that the last listing in the html_list is a "Private Room"
-
+        self.assertEqual(listing_informations[-1][1], 'Private Room')
         # check that the third listing has one bedroom
-
-        pass
+        self.assertEqual(listing_informations[2][2], 1)
 
     def test_get_detailed_listing_database(self):
         # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
